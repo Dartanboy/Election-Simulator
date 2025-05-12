@@ -184,7 +184,7 @@
 
         function displayResults(tableId, results) {
             const tableBody = document.getElementById(tableId).getElementsByTagName('tbody')[0];
-            tableBody.innerHTML = ''; // Clear any existing rows
+            tableBody.innerHTML = '';
 
             Object.keys(results).forEach(partyName => {
                 const row = document.createElement('tr');
