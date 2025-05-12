@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Simulation</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Election Simulator</h1>
+
+    <form id="partyForm">
+        <div>
+            <label for="partyName">Party Name:</label>
+            <input type="text" id="partyName" required>
+        </div>
+        <div>
+            <label for="partyVotes">Party Votes:</label>
+            <input type="number" id="partyVotes" required>
+        </div>
+        <button type="submit">Add Party</button>
+    </form>
+
+    <br>
+
+    <div>
+        <label for="totalSeats">Total Seats:</label>
+        <input type="number" id="totalSeats" required>
+    </div>
+    <button onclick="simulateElection()">Simulate Election</button>
+
+    <hr>
+
+    <h2>Parties Added</h2>
+    <div id="partyList"></div>
+    <button onclick="clearParties()">Clear</button>
+
+    <hr>
+
+    <h2>Results</h2>
+    <h3>D'Hondt Method</h3>
+    <table id="results-dhondt">
+        <thead>
+            <tr>
+                <th>Party</th>
+                <th>Votes</th>
+                <th>Seats</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    
+    <h3>Sainte-Lague Method</h3>
+    <table id="results-sainte-lague">
+        <thead>
+            <tr>
+                <th>Party</th>
+                <th>Votes</th>
+                <th>Seats</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        let parties = [];
+
+        function clearParties() {
+            parties = [];
+            updatePartyList();
+            clearResults();
+        }
+
+        function clearResults() {
+            document.getElementById('results-dhondt').getElementsByTagName('tbody')[0].innerHTML = '';
+            document.getElementById('results-sainte-lague').getElementsByTagName('tbody')[0].innerHTML = '';
+        }
+
+        function calculateDhondt(parties, totalSeats) {
+            let seats = {};
+            parties.forEach((party) => {
+                seats[party.name] = 0;
+            });
+
+            for (let i = 0; i < totalSeats; i++) {
+                let highestQuotientParty = parties[0];
+                let highestQuotient = 0;
+
+                parties.forEach((party) => {
+                    const voteCount = party.votes;
+                    const seatCount = seats[party.name] || 0;
+                    const quotient = voteCount / (seatCount + 1);
+
+                    if (quotient > highestQuotient) {
+                        highestQuotient = quotient;
+                        highestQuotientParty = party;
+                    }
+                });
+
+                seats[highestQuotientParty.name] = (seats[highestQuotientParty.name] || 0) + 1;
+            }
+
+            return seats;
+        }
+
+        function calculateSainteLague(parties, totalSeats) {
+            let seats = {};
+            parties.forEach((party) => {
+                seats[party.name] = 0;
+            });
+
+            for (let i = 0; i < totalSeats; i++) {
+                let highestQuotientParty = parties[0];
+                let highestQuotient = 0;
+
+                parties.forEach((party) => {
+                    const voteCount = party.votes;
+                    const seatCount = seats[party.name] || 0;
+                    const quotient = voteCount / ((2 * seatCount) + 1);
+
+                    if (quotient > highestQuotient) {
+                        highestQuotient = quotient;
+                        highestQuotientParty = party;
+                    }
+                });
+
+                seats[highestQuotientParty.name] = (seats[highestQuotientParty.name] || 0) + 1;
+            }
+
+            return seats;
+        }
+
+        document.getElementById('partyForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const partyName = document.getElementById('partyName').value;
+            const partyVotes = parseInt(document.getElementById('partyVotes').value, 10);
+
+            parties.push({ name: partyName, votes: partyVotes });
+
+            updatePartyList();
+
+            document.getElementById('partyName').value = '';
+            document.getElementById('partyVotes').value = '';
+        });
+
+        function updatePartyList() {
+            const partyListDiv = document.getElementById('partyList');
+            partyListDiv.innerHTML = '';
+            parties.forEach(party => {
+                const partyDiv = document.createElement('div');
+                partyDiv.textContent = `${party.name}: ${party.votes} votes`;
+                partyListDiv.appendChild(partyDiv);
+            });
+        }
+
+        function simulateElection() {
+            const totalSeats = parseInt(document.getElementById('totalSeats').value, 10);
+
+            if (parties.length === 0) {
+                alert('Please add at least one party.');
+                return;
+            }
+
+            const seatResults = calculateDhondt(parties, totalSeats);
+            const seatResultsSL = calculateSainteLague(parties, totalSeats);
+
+            displayResults('results-dhondt', seatResults);
+            displayResults('results-sainte-lague', seatResultsSL);
+        }
+
+        function displayResults(tableId, results) {
+            const tableBody = document.getElementById(tableId).getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = ''; // Clear any existing rows
+
+            Object.keys(results).forEach(partyName => {
+                const row = document.createElement('tr');
+                const partyCell = document.createElement('td');
+                const votesCell = document.createElement('td');
+                const seatsCell = document.createElement('td');
+
+                partyCell.textContent = partyName;
+                votesCell.textContent = parties.find(party => party.name === partyName).votes;
+                seatsCell.textContent = results[partyName];
+
+                row.appendChild(partyCell);
+                row.appendChild(votesCell);
+                row.appendChild(seatsCell);
+                tableBody.appendChild(row);
+            });
+        }
+    </script>
+</body>
+</html>
